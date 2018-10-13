@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace EPAM.Core.ReportHelper.Tests
@@ -14,7 +15,8 @@ namespace EPAM.Core.ReportHelper.Tests
         }
 
         [TestMethod]
-       // [DataRow("Hello: my world", '_', "Hello_ my world")]
+        [DynamicData("NormalizeFileNameTestData", DynamicDataSourceType.Property)]
+        // [DataRow("Hello: my world", '_', "Hello_ my world")]
         [DataRow("Hello my %world", '_', "Hello my %world")]
         [DataRow("Hello my /world", '_', "Hello my _world")]
         public void NormalizeFileNameTest(string name, char repl, string expected)
@@ -22,6 +24,27 @@ namespace EPAM.Core.ReportHelper.Tests
             var result = ReportNameHelper.NormalizeFileName(name, repl);
 
             result.Should().BeEquivalentTo(expected);
+        }
+
+        static object[][] NormalizeFileNameTestData
+        {
+            get
+            {
+                object[][] data = new object[][]
+                {
+            new object[]{"Hello: my world", '_', "Hello_ my world"},
+            new object[]{"Hello my %world", '_', "Hello my %world"},
+            new object[]{"Hello my /world", '_', "Hello my _world"}
+                };
+
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                {
+                    data[0][2] = "Hello: my world";
+                    data[1][2] = "Hello my %world";
+                    data[2][2] = "Hello my _world";
+                }
+                return data;
+            }
         }
     }
 }
